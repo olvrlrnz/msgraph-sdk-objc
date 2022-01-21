@@ -8,6 +8,11 @@
 #define DefaultChunkSize 5*1024*1024
 #define RequiredChunkSizeIncrement 320*1024
 
+/**
+ Progress handler to be called after a chunk of data has been uploaded.
+ */
+typedef void (^LargeFileUploadTaskProgressHandler)(NSUInteger bytesCompleted);
+
 /*
  This class is Generic base class for large file upload tasks and handles all the basic functionalities of a large file uploader
  */
@@ -27,8 +32,9 @@
 /*
  This function will start uploading all the small segments of the file one by one returning the response in completion handler in case there is any error or the upload process gets completed.
  @param completionHandler Completion Handler to be calles in event of any error or successfull completion
+ @param progressHandler Progress Handler to be called after a chunk has been uploaded successfully
  */
-- (void)uploadWithCompletion:(HTTPRequestCompletionHandler)completionHandler;
+- (void)uploadWithCompletion:(HTTPRequestCompletionHandler)completionHandler progress:(LargeFileUploadTaskProgressHandler)progressHandler;
 
 /*
  This class function can be used to create upload session for a given request object.

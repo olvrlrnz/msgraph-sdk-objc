@@ -37,9 +37,9 @@
     return self;
 }
 
-- (void)uploadWithCompletion:(HTTPRequestCompletionHandler)completionHandler
+- (void)uploadWithCompletion:(HTTPRequestCompletionHandler)completionHandler progress:(LargeFileUploadTaskProgressHandler)progressHandler
 {
-    [self uploadNextSegmentWithCompletion:completionHandler];
+    [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
 }
 
 - (void)setNextRange
@@ -49,7 +49,7 @@
     self.currentRange = NSMakeRange(start,length);
 }
 
-- (void)uploadNextSegmentWithCompletion:(HTTPRequestCompletionHandler)completionHandler
+- (void)uploadNextSegmentWithCompletion:(HTTPRequestCompletionHandler)completionHandler progress:(LargeFileUploadTaskProgressHandler)progressHandler
 {
     //Create request
     NSMutableURLRequest *urlRequest = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.uploadSessionDictionary[@"uploadUrl"]]];
@@ -69,17 +69,19 @@
     MSURLSessionDataTask *uploadTask = [self.httpClient dataTaskWithRequest:urlRequest completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if([(NSHTTPURLResponse *)response statusCode] == MSExpectedResponseCodesAccepted)
         {
+            progressHandler(NSMaxRange(self.currentRange));
             [self setNextRange];
-            [self uploadNextSegmentWithCompletion:completionHandler];
+            [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
         }else
         {
             NSDictionary *dataDict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
             if(dataDict[@"id"])
             {
+                progressHandler(NSMaxRange(self.currentRange));
                 completionHandler(data, response, error);
             }else
             {
-                [self uploadNextSegmentWithCompletion:completionHandler];
+                [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
             }
         }
 
