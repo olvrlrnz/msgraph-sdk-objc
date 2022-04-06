@@ -74,14 +74,27 @@
             [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
         }else
         {
-            NSDictionary *dataDict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
-            if(dataDict[@"id"])
+            if([(NSHTTPURLResponse *)response statusCode] != MSExpectedResponseCodesCreated)
             {
-                progressHandler(NSMaxRange(self.currentRange));
-                completionHandler(data, response, error);
-            }else
+                completionHandler(nil, response, error);
+                return;
+            }
+
+            @try
             {
-                [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
+                NSDictionary *dataDict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
+                if(dataDict[@"id"])
+                {
+                    progressHandler(NSMaxRange(self.currentRange));
+                    completionHandler(data, response, error);
+                }else
+                {
+                    [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
+                }
+            }@catch (NSException *e)
+            {
+                NSError *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:ENODATA userInfo:nil];
+                completionHandler(nil, nil, error);
             }
         }
 
