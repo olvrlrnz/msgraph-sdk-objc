@@ -32,7 +32,7 @@
         self.chunkSize = chunkSize<=0 ? DefaultChunkSize : chunkSize;
         NSAssert(self.chunkSize % RequiredChunkSizeIncrement ==0, @"Chunk size must be a multiple of 320 KiB");
 
-        self.currentRange = NSMakeRange(0, self.chunkSize);
+        self.currentRange = NSMakeRange(0, MIN(self.chunkSize, fileData.length));
     }
     return self;
 }
