@@ -69,32 +69,26 @@
     MSURLSessionDataTask *uploadTask = [self.httpClient dataTaskWithRequest:urlRequest completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if([(NSHTTPURLResponse *)response statusCode] == MSExpectedResponseCodesAccepted)
         {
-            progressHandler(NSMaxRange(self.currentRange));
             [self setNextRange];
             [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
         }else
         {
-            if([(NSHTTPURLResponse *)response statusCode] != MSExpectedResponseCodesCreated)
+            NSDictionary *dataDict;
+
+            @try {
+                dataDict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
+            }@catch(NSException *e)
             {
-                completionHandler(nil, response, error);
-                return;
+                NSError *err = [NSError errorWithDomain:NSPOSIXErrorDomain code:ENODATA userInfo:nil];
+                completionHandler(nil, nil, err);
             }
 
-            @try
+            if(dataDict[@"id"])
             {
-                NSDictionary *dataDict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
-                if(dataDict[@"id"])
-                {
-                    progressHandler(NSMaxRange(self.currentRange));
-                    completionHandler(data, response, error);
-                }else
-                {
-                    [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
-                }
-            }@catch (NSException *e)
+                completionHandler(data, response, error);
+            }else
             {
-                NSError *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:ENODATA userInfo:nil];
-                completionHandler(nil, nil, error);
+                [self uploadNextSegmentWithCompletion:completionHandler progress:progressHandler];
             }
         }
 
